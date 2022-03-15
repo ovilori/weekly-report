@@ -16,8 +16,8 @@ def sort_report(generated_report):
     #getting the list of vendors.
     vendors = []
     for row in range(2, sheet1.max_row + 1):
-        if sheet1.cell(row = row, column = 3).value not in vendors:
-            vendors.append(sheet1.cell(row = row, column = 3).value)
+        if sheet1.cell(row = row, column = 3).value.upper() not in vendors:
+            vendors.append(sheet1.cell(row = row, column = 3).value.upper())
     #create summary sheet for vendors.
     wb.create_sheet(index=2, title='vendors summary')
     summary_sheet = wb['vendors summary']
