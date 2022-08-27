@@ -3,7 +3,7 @@ This is a personal project including codes I wrote to solve a personal challenge
 
 - Log in to the solarwind on a web browser. 
 - Navigate to the report section and manually edit the start and end date of the new week.
-- Svae, and then export the data to an excel sheet.
+- Save, and then export the data to an excel sheet.
 - Manually clean the data.
 - Manually create new sheets for all providers in excel.
 - Manually copy the data for each provider to the seperate sheets for each days of the week, etc.
