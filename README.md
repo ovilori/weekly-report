@@ -1,5 +1,5 @@
 # weekly-report
-This is a personal project including codes I wrote to solve a personal challenge at work., where I was responsible for the weekly uptime report of all service providers on our network. Preparing the report was time consuming for the following reasons:
+This is a personal project including codes I wrote to solve a personal challenge at work, where I was responsible for the weekly uptime report of all service providers on our network. Preparing the report was time consuming for the following reasons:
 
 - Log in to the solarwind on a web browser. 
 - Navigate to the report section and manually edit the start and end date of the new week.
