@@ -1,11 +1,16 @@
-'''This program connects to a database server to query and sort the data for each vendor during the week.
-	It then sends an email with the exported and sorted excel files as an attachment'''
+# This program runs at 6:05PM every Friday on a solarwind server (or any server that can communicate with the solarwind DB) and does the following:
+# 1. Connects to a solarwind database server to query and export the uptime data for service providers for the week.
+# 2. Sends the error message via email if connection to the database server fails.
+# 3. Calls a module to arrange the data for each provider on seperate sheets.
+# 4. Sends the raw data extracted from the DB and the sorted report via email.
+# 5. Remove the copies of the exported and sorted report from the server/PC.
+
 #importing required modules
 import pandas as pd
 import pyodbc, os, smtplib
 from datetime import date, datetime, timedelta
 from email.message import EmailMessage
-import sort_module
+from sortProviderUptime import sortUptime
 #defining the database connection variables.
 server = 'ip address' 
 database = 'database name' 
@@ -35,8 +40,7 @@ except pyodbc.Error as e:
     mail_server.quit()
 #setting the first date (Monday) and end date (Friday).
 end_date = date.today()
-diff = timedelta(days = 4)
-start_date = end_date - diff
+start_date = end_date - timedelta(days = 4)
 start_date = str(start_date) + 'T08:00:00'
 end_date = str(end_date) + 'T18:00:00'
 #SQL command to read the data
@@ -51,26 +55,34 @@ sqlQuery = '''SELECT Convert(Date,Datetime) AS SummaryDate,
 value = (start_date,end_date)
 #getting the data from SQL into pandas dataframe
 Query_output = pd.read_sql(sql = sqlQuery, con = connectDB, params=value)
-#storing the time generated in a variable
+#storing the time exported in a variable
 report_date = datetime.now().strftime('%Y_%m_%d_%I_%M_%S_%p')
-#Export the data to weekly report folder
-Query_output.to_excel(os.environ['userprofile'] + '\\Documents\\Weekly Report\\' + 'Weekly_Report_exported_on_' + report_date + '.xlsx', index=False)
-#calling the sort module to sort the data for each vendor
-sorted_report = sort_module.sort_report(os.environ['userprofile'] + '\\Documents\\Weekly Report\\' + 'Weekly_Report_exported_on_' + report_date + '.xlsx')
-#reading the generated report and getting the filename
-with open(os.environ['userprofile'] + '\\Documents\\Weekly Report\\' + 'Weekly_Report_exported_on_' + report_date + '.xlsx', 'rb') as file:
-    report = file.read()
-    report_name = os.path.basename(file.name)
+#Convert exported report to excel format
+Query_output.to_excel('Weekly_Report_exported_on_' + report_date + '.xlsx', index=False)
+# Query_output.to_excel(os.environ['userprofile'] + '\\Documents\\Weekly Report\\' + 'Weekly_Report_exported_on_' + report_date + '.xlsx', index=False)
+#calling the sort module to arrange the data for each provider on seperate sheets.
+sortedReport = sortUptime('Weekly_Report_exported_on_' + report_date + '.xlsx')
+# reading the exported report and getting the filename
+# with open(os.environ['userprofile'] + '\\Documents\\Weekly Report\\' + 'Weekly_Report_exported_on_' + report_date + '.xlsx', 'rb') as file:
+with open('Weekly_Report_exported_on_' + report_date + '.xlsx', 'rb') as file:
+    report = file.read() 
+    reportExcel_Filename = os.path.basename(file.name)
 #reading the sorted report and getting the filename
-with open(sorted_report, 'rb') as f:
+with open(sortedReport, 'rb') as f:
     sorted = f.read()
-    sorted_name = os.path.basename(f.name)
-#sending the generated & sorted report as an email.
-message_body = 'Vendor report for the week attached.'
+    sortedReport_Filename = os.path.basename(f.name)
+#sending the exported & sorted report as an email.
+message_body = 'Providers uptime report for the week attached.'
 msg.set_content(message_body)
-#adding generated report file as an attachment
-msg.add_attachment(report, maintype = 'application', subtype = 'xlsx', filename = report_name)
+#adding exported report file as an attachment
+msg.add_attachment(report, maintype = 'application', subtype = 'xlsx', filename = reportExcel_Filename)
+
 #adding sorted report file as an attachment
-msg.add_attachment(sorted, maintype = 'application', subtype = 'xlsx', filename = sorted_name)
+msg.add_attachment(sorted, maintype = 'application', subtype = 'xlsx', filename = sortedReport_Filename)
 mail_server.send_message(msg)
 mail_server.quit()
+#Remove copies of the files from the server/PC after sending email.
+os.remove('Weekly_Report_exported_on_' + report_date + '.xlsx')
+os.remove(sortedReport)
+
+
